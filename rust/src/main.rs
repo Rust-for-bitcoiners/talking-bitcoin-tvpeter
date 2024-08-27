@@ -13,9 +13,9 @@ use tokio::{
 use bitcoin::{
     consensus::{
          deserialize_partial,
-        encode::{serialize_hex},
+        encode::serialize_hex,
     },
-    Block,
+    Block, NetworkKind,
 };
 use bitcoin::hashes::{sha256d, Hash};
 use rand::seq::SliceRandom;
@@ -26,10 +26,23 @@ const PROTOCOL_VERSION: i32 = 70015;
 
 // Define the fields
 struct NetAddress {
+    time: Option<u32>, // Not present in version message
+    services: u64,
+    network_type: IpAddr,
+    port: u16,
 }
 
 // Define the fields
 struct VersionMessage {
+    version: i32,
+    services: u64,
+    timestamp: i64,
+    addr_recv: NetAddress,
+    addr_from: NetAddress,
+    nonce: u64,
+    user_agent: String,
+    start_height: i32,
+    relay: bool,
 }
 
 const REGTEST_MAGIC: [u8; 4] = [0;4];// todo!(); 
