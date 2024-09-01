@@ -13,9 +13,9 @@ use tokio::{
 use bitcoin::{
     consensus::{
          deserialize_partial,
-        encode::{serialize_hex},
+        encode::serialize_hex,
     },
-    Block,
+    Block, NetworkKind,
 };
 use bitcoin::hashes::{sha256d, Hash};
 use rand::seq::SliceRandom;
@@ -26,21 +26,49 @@ const PROTOCOL_VERSION: i32 = 70015;
 
 // Define the fields
 struct NetAddress {
+    time: Option<u32>, // Not present in version message
+    services: u64,
+    network_type: Ipv6Addr,
+    port: u16,
 }
 
 // Define the fields
 struct VersionMessage {
+    version: i32,
+    services: u64,
+    timestamp: i64,
+    addr_recv: NetAddress,
+    addr_from: NetAddress,
+    nonce: u64,
+    user_agent: String,
+    start_height: i32,
+    relay: bool,
 }
 
-const REGTEST_MAGIC: [u8; 4] = [0;4];// todo!(); 
-const MAINNET_MAGIC: [u8; 4] = [0;4];// todo!(); 
+const REGTEST_MAGIC: [u8; 4] = [0xDA, 0xB5, 0xBF, 0xFA];// todo!(); 
+const MAINNET_MAGIC: [u8; 4] = [0xD9, 0xB4, 0xBE, 0xF9];// todo!(); 
 
 fn serialize_net_address(addr: &NetAddress) -> Vec<u8> {
-    todo!()
+    let mut buf = Vec::new();
+    buf.extend(addr.services.to_le_bytes());
+    buf.extend(addr.network_type.octets());
+    buf.extend(addr.port.to_be_bytes());
+    buf
 }
 
 fn serialize_version_msg(msg: &VersionMessage) -> Vec<u8> {
-    todo!()
+    let mut buf = Vec::new();
+    buf.extend(PROTOCOL_VERSION.to_le_bytes());
+    buf.extend(msg.services.to_be_bytes());
+    buf.extend(msg.timestamp.to_le_bytes());
+    buf.extend(serialize_net_address(&msg.addr_recv));
+    buf.extend(serialize_net_address(&msg.addr_from));
+    buf.extend(msg.nonce.to_le_bytes());
+    buf.extend(msg.user_agent.len().to_be_bytes());
+    buf.extend(msg.user_agent.as_bytes());
+    buf.extend(msg.start_height.to_le_bytes());
+    buf.push(msg.relay as u8);
+    buf
 }
 
 fn hex_to_bytes(hex_string: &str) -> Result<Vec<u8>, std::num::ParseIntError> {
